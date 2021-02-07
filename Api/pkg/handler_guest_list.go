@@ -2,21 +2,21 @@ package pkg
 
 import (
 	"encoding/json"
-	"github.com/Rahmadax/GOMuxServer/Api/conf"
+	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
 	"io/ioutil"
 	"net/http"
 )
 
-func (app *App) addGuestListsRoutes(routes conf.RoutesConfig){
-	app.Router.Mux.HandleFunc(routes.GetGuestListUri, app.handleGuestListGet()).Methods("GET")
-	app.Router.Mux.HandleFunc(routes.PostGuestListUri, app.handleGuestListPost()).Methods("POST")
-	app.Router.Mux.HandleFunc(routes.DeleteGuestListUri, app.handleGuestListDelete()).Methods("DELETE")
+func (app *App) addGuestListRoutes() {
+	routes := app.Config.Routes
+
+	app.Router.HandleFunc(routes.GetGuestListUri, app.getGuestListHandler()).Methods("GET")
+	app.Router.HandleFunc(routes.PostGuestListUri, app.postGuestListHandler()).Methods("POST")
+	app.Router.HandleFunc(routes.DeleteGuestListUri, app.guestListDeleteHandler()).Methods("DELETE")
 }
 
-func (app *App) handleGuestListGet() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-
-	}
+type GuestList struct {
+	Guests []Guest `json:"guests"`
 }
 
 type Guest struct {
@@ -25,19 +25,69 @@ type Guest struct {
 	AccompanyingGuests int    `json:"accompanying_guests"`
 }
 
-func (app *App) handleGuestListPost() http.HandlerFunc {
+type NameResponse struct {
+	Name string `json:"name"`
+}
+
+func (app *App) getGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, _ := ioutil.ReadAll(r.Body)
+		results, err := app.dbClient.Query(queries.GetGuestList)
+		if err != nil {
+			panic("AHHHH")
+		}
 
-		guest := Guest{}
-		_ = json.Unmarshal(body, &guest)
+		guestList := GuestList{}
 
-		println(guest.Name, guest.Table, guest.AccompanyingGuests)
+		for results.Next() {
+			thisGuest := Guest{}
+
+			err = results.Scan(thisGuest)
+			if err != nil {
+				panic(err.Error())
+			}
+
+			guestList.Guests = append(guestList.Guests, thisGuest)
+		}
+
+		response, _ := json.Marshal(guestList)
+
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(response)
 	}
 }
 
-func (app *App) handleGuestListDelete() http.HandlerFunc {
+func (app *App) postGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+		newGuest := Guest{}
+		_ = json.Unmarshal(body, &newGuest)
 
+		currentGuestsAtTable := 0
+		_ = app.dbClient.QueryRow(queries.CountGuestsAtTable).Scan(currentGuestsAtTable)
+
+		remainingSpace := app.Config.Tables.TableCapacity - currentGuestsAtTable
+		if newGuest.AccompanyingGuests+1 > remainingSpace {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+
+		_, _ = app.dbClient.Exec(queries.InsertGuest, newGuest.Name, newGuest.Table, newGuest.AccompanyingGuests)
+
+		w.WriteHeader(http.StatusOK)
+		response, _ := json.Marshal(newGuest.Name)
+		_, _ = w.Write(response)
+	}
+}
+
+func (app *App) guestListDeleteHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+		newGuest := Guest{}
+		_ = json.Unmarshal(body, &newGuest)
+
+		_, _ = app.dbClient.Exec(queries.DeleteGuest, newGuest.Name)
+
+		w.WriteHeader(http.StatusOK)
+		response, _ := json.Marshal(NameResponse{Name: newGuest.Name})
+		w.Write(response)
 	}
 }

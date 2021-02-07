@@ -9,12 +9,19 @@ import (
 type Configuration struct {
 	Database DatabaseConfig `yaml:"database"`
 	Server   ServerConfig   `yaml:"server"`
-	Routes   RoutesConfig   `yaml:"routes"`
+	Routes   RoutesConfig   `yaml:"queries"`
+
+	Tables TableConfig `yaml:"tables"`
 }
 
 type ServerConfig struct {
 	HostPort   string `yaml:"host_port"`
 	HealthPort string `yaml:"health_port"`
+}
+
+type TableConfig struct {
+	TableCount    int `yaml:"table_count"`
+	TableCapacity int `yaml:"table_capacity"`
 }
 
 type DatabaseConfig struct {

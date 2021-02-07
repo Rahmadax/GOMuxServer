@@ -31,7 +31,7 @@ func run() error {
 	}
 
 	println("Listening on port - " + config.Server.HostPort)
-	return http.ListenAndServe(":"+config.Server.HostPort, app.Router.Mux)
+	return http.ListenAndServe(":"+config.Server.HostPort, app.Router)
 }
 
 

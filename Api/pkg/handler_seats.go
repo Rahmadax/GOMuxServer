@@ -1,16 +1,17 @@
 package pkg
 
 import (
-	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"net/http"
 )
 
-func (app *App) addSeatsRoutes(routes conf.RoutesConfig){
-	app.Router.Mux.HandleFunc(routes.CountEmptySeatsUri, app.handleCountEmptySeats()).Methods("GET")
+func (app *App) addSeatsRoutes(){
+	routes := app.Config.Routes
+
+	app.Router.HandleFunc(routes.CountEmptySeatsUri, app.handleCountEmptySeats()).Methods("GET")
 }
 
-type emptySeats struct {
-
+type SeatsEmptyResponse struct {
+	SeatsEmpty int `json:"seats_empty"`
 }
 
 func (app *App) handleCountEmptySeats() http.HandlerFunc {

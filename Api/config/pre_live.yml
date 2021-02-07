@@ -5,12 +5,16 @@ server:
     origins:
       - "http://localhost:3000"
 
+tables:
+  table_count: 10
+  table_capacity: 8
+
 database:
   host: "localhost"
   port: "9020"
   username: "influencer_social"
 
-  #Shouldn't be in here, but dont have time to set up vault / similar
+  #Shouldn't be in here, but just for this app
   password: "wowokwow"
 
   database: "influencer"

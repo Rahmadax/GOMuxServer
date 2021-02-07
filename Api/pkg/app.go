@@ -11,43 +11,36 @@ import (
 )
 
 type App struct {
-	Router   *Router
+	Config   conf.Configuration
+	Router   *mux.Router
 	dbClient *sql.DB
 }
 
-type Router struct {
-	Mux *mux.Router
-}
-
 func NewApp(config conf.Configuration) (*App, error) {
-	app := &App{}
-
-	app.newRouter()
-	app.addEndpoints(config)
-
-	app.newDBClient(config.Database)
+	app := &App{
+		Config: config,
+		Router: mux.NewRouter(),
+	}
+	app.addEndpoints()
+	app.newDBClient()
 
 	return app, nil
 }
 
 func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	app.Router.Mux.ServeHTTP(w, r)
+	app.Router.ServeHTTP(w, r)
 }
 
-func (app *App) newRouter(){
-	app.Router = &Router{
-		Mux: mux.NewRouter(),
-	}
+func (app *App) addEndpoints() {
+	app.addGuestListRoutes()
+	app.addGuestsRoutes()
+	app.addInvitationRoutes()
+	app.addSeatsRoutes()
 }
 
-func (app *App) addEndpoints(config conf.Configuration) {
-	app.addGuestListsRoutes(config.Routes)
-	app.addGuestRoutes(config.Routes)
-	app.addInvitationRoutes(config.Routes)
-	app.addSeatsRoutes(config.Routes)
-}
+func (app *App) newDBClient() {
+	dbConfig := app.Config.Database
 
-func (app *App) newDBClient(dbConfig conf.DatabaseConfig) {
 	db, err := sql.Open(dbConfig.Driver, formatConnectionString(dbConfig))
 	if err != nil {
 		panic(err)
