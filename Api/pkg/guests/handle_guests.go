@@ -1,4 +1,4 @@
-package pkg
+package guests
 
 //func (router *router) handleGuestsGet() http.HandlerFunc {
 //	return func(w http.ResponseWriter, r *http.Request) {

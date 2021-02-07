@@ -1,6 +1,6 @@
 server:
-  host_port: 8080
-  health_port: 8081
+  host_port: "8080"
+  health_port: "8081"
   cors:
     origins:
       - "http://localhost:3000"

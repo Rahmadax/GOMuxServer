@@ -1,6 +1,7 @@
 package conf
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
 )
@@ -13,7 +14,7 @@ type Configuration struct {
 
 type ServerConfig struct {
 	HostPort   string `yaml:"host_port"`
-	HealthPort bool   `yaml:"health_port"`
+	HealthPort string `yaml:"health_port"`
 }
 
 type DatabaseConfig struct {
@@ -30,9 +31,9 @@ type DatabaseConfig struct {
 }
 
 type RoutesConfig struct {
-	getGuestListUrl    string `yaml:"getGuestListUri"`
-	postGuestListUrl   string `yaml:"postGuestListUri"`
-	deleteGuestListUrl string `yaml:"deleteGuestListUri"`
+	GetGuestListUrl    string `yaml:"getGuestListUri"`
+	PostGuestListUrl   string `yaml:"postGuestListUri"`
+	DeleteGuestListUrl string `yaml:"deleteGuestListUri"`
 }
 
 func GetConfig(configFile string) (*Configuration, error) {
