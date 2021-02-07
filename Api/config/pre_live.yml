@@ -17,6 +17,13 @@ database:
 
 routes:
   getGuestListUri: "/guest_list"
-  putGuestListUri: "/guest_list/{name}"
+  postGuestListUri: "/guest_list/{name}"
   deleteGuestListUri: "/guest_list/{name}"
 
+  getInvitationUri: "/invitation/{name}"
+
+  getGuestsUri: "/guests"
+  putGuestsUri: "/guests/{name}"
+  deleteGuestsUri: "/guests/{name}"
+
+  getEmptySeats: "/seats_empty"

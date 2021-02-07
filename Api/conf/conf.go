@@ -31,9 +31,17 @@ type DatabaseConfig struct {
 }
 
 type RoutesConfig struct {
-	GetGuestListUrl    string `yaml:"getGuestListUri"`
-	PostGuestListUrl   string `yaml:"postGuestListUri"`
-	DeleteGuestListUrl string `yaml:"deleteGuestListUri"`
+	GetGuestListUri    string `yaml:"getGuestListUri"`
+	PostGuestListUri   string `yaml:"postGuestListUri"`
+	DeleteGuestListUri string `yaml:"deleteGuestListUri"`
+
+	GetGuestsUri    string `yaml:"getGuestsUri"`
+	PutGuestsUri    string `yaml:"putGuestsUri"`
+	DeleteGuestsUri string `yaml:"deleteGuestsUri"`
+
+	GetInvitationUri string `yaml:"getInvitationUri"`
+
+	GetEmptySeatsUri string `yaml:"getEmptySeats"`
 }
 
 func GetConfig(configFile string) (*Configuration, error) {
