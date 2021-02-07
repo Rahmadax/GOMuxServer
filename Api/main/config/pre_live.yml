@@ -1,0 +1,22 @@
+server:
+  host_port: 8080
+  health_port: 8081
+  cors:
+    origins:
+      - "http://localhost:3000"
+
+database:
+  host: "localhost"
+  port: "9020"
+  username: "influencer_social"
+  database: "influencer"
+  ssl_mode: "disable"
+  max_idle_conns: 2
+  max_open_conns: 5
+  max_conn_life_time_minute: 30
+
+routes:
+  getGuestListUri: "/guest_list"
+  putGuestListUri: "/guest_list/{name}"
+  deleteGuestListUri: "/guest_list/{name}"
+
