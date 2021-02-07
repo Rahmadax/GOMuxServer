@@ -6,10 +6,14 @@ import (
 )
 
 func (app *App) addSeatsRoutes(routes conf.RoutesConfig){
-	app.Router.Mux.HandleFunc(routes.GetEmptySeatsUri, app.handleGetEmptySeats()).Methods("GET")
+	app.Router.Mux.HandleFunc(routes.CountEmptySeatsUri, app.handleCountEmptySeats()).Methods("GET")
 }
 
-func (app *App) handleGetEmptySeats() http.HandlerFunc {
+type emptySeats struct {
+
+}
+
+func (app *App) handleCountEmptySeats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 	}

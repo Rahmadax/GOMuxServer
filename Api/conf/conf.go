@@ -18,10 +18,14 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host                  string        `yaml:"host"`
-	Port                  string        `yaml:"port"`
-	Username              string        `yaml:"username"`
-	Database              string        `yaml:"database"`
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Database string `yaml:"database"`
+	Driver   string `yaml:"driver"`
+	Timeout  string `yaml:"timeout"`
+
 	SSLMode               string        `yaml:"ssl_mode"`
 	SSLCert               string        `yaml:"ssl_cert"`
 	SSLKey                string        `yaml:"ssl_key"`
@@ -41,7 +45,7 @@ type RoutesConfig struct {
 
 	GetInvitationUri string `yaml:"getInvitationUri"`
 
-	GetEmptySeatsUri string `yaml:"getEmptySeats"`
+	CountEmptySeatsUri string `yaml:"countEmptySeatsUri"`
 }
 
 func GetConfig(configFile string) (*Configuration, error) {

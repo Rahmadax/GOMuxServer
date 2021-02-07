@@ -9,7 +9,14 @@ database:
   host: "localhost"
   port: "9020"
   username: "influencer_social"
+
+  #Shouldn't be in here, but dont have time to set up vault / similar
+  password: "wowokwow"
+
   database: "influencer"
+  driver: "mysql"
+  timeout: "30"
+
   ssl_mode: "disable"
   max_idle_conns: 2
   max_open_conns: 5
@@ -26,4 +33,4 @@ routes:
   putGuestsUri: "/guests/{name}"
   deleteGuestsUri: "/guests/{name}"
 
-  getEmptySeats: "/seats_empty"
+  countEmptySeatsUri: "/seats_empty"
