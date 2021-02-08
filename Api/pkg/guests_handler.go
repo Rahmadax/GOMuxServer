@@ -1,9 +1,9 @@
 package pkg
 
 import (
-	"encoding/json"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
-	"net/http"
+"encoding/json"
+"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
+"net/http"
 )
 
 func (app *App) addGuestsRoutes() {
@@ -15,6 +15,13 @@ func (app *App) addGuestsRoutes() {
 
 }
 
+func (app *App) addInvitationRoutes(){
+	routes := app.Config.Routes
+
+	app.Router.HandleFunc(routes.GetInvitationUri, app.handleInvitationGet()).Methods("GET")
+}
+
+// Models
 type PresentGuestList struct {
 	Guests []PresentGuest `json:"guests"`
 }
@@ -25,29 +32,13 @@ type PresentGuest struct {
 	AccompanyingGuests int    `json:"accompanying_guests" db:"accompanying_guests"`
 }
 
+
+// Guests
 func (app *App) getGuestsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		results, err := app.dbClient.Query(queries.CountPresentGuests)
-		if err != nil {
-			panic(err)
-		}
+		presentGuestList := app.getPresentGuests()
 
-		guestList := PresentGuestList{}
-
-		for results.Next() {
-			var name string
-			var accompanyingGuests int
-			var timeArrived string
-
-			err = results.Scan(&name, &accompanyingGuests, &timeArrived)
-			if err != nil {
-				panic(err.Error())
-			}
-
-			guestList.Guests = append(guestList.Guests, PresentGuest{name, timeArrived, accompanyingGuests})
-		}
-
-		response, _ := json.Marshal(guestList)
+		response, _ := json.Marshal(presentGuestList)
 
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(response)
@@ -64,9 +55,17 @@ func (app *App) deleteGuestsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		_, err := app.dbClient.Exec(queries.DeleteGuest)
 		if err != nil {
-
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+// Invitation
+func (app *App)handleInvitationGet() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+
 	}
 }
