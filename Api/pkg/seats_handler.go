@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"encoding/json"
 	"net/http"
 )
 
@@ -16,6 +17,11 @@ type SeatsEmptyResponse struct {
 
 func (app *App) handleCountEmptySeats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		presentGuestCount := app.countPresentGuests()
 
+		maximumSeats := app.Config.Tables.TableCount * app.Config.Tables.TableCapacity
+
+		response, _ := json.Marshal(SeatsEmptyResponse{maximumSeats - presentGuestCount})
+		_, _ = w.Write(response)
 	}
 }

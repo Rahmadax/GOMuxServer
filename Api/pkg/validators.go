@@ -2,19 +2,29 @@ package pkg
 
 import (
 	"regexp"
-	"sync"
 )
 
 func (newGuest Guest) validate(tableCount int) bool {
-	var wg *sync.WaitGroup
+	validNameChan := make(chan bool)
+	validGuestNumChan := make(chan bool)
+	validTableNumChan := make(chan bool)
 
-	defer wg.Done()
+	go func() {
+		validNameChan <- isValidGuestName(newGuest.Name)
+	}()
+	go func() {
+		validGuestNumChan <- isValidGuestNumber(newGuest.AccompanyingGuests)
+	}()
+	go func() {
+		validTableNumChan <- isValidTableNumber(newGuest.Table, tableCount)
+	}()
+
+	return <-validNameChan && <-validGuestNumChan && <-validTableNumChan
 }
 
-
 // general
-func isValidGuestName(name string) bool{
-	matched, err := regexp.MatchString(`[a-z ,.'-]+`, name)
+func isValidGuestName(name string) bool {
+	matched, err := regexp.MatchString(`[a-z,.'-]+`, name)
 	if err != nil {
 		return false
 	}
@@ -26,5 +36,5 @@ func isValidGuestNumber(accompanyingGuests int) bool {
 }
 
 func isValidTableNumber(tableNumber int, tableCount int) bool {
-	return tableCount >= tableNumber
+	return tableCount >= tableNumber && tableNumber > 0
 }

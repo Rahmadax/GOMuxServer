@@ -14,6 +14,9 @@ func (app *App) addGuestListRoutes() {
 	app.Router.HandleFunc(routes.GetGuestListUri, app.getGuestListHandler()).Methods("GET")
 	app.Router.HandleFunc(routes.PostGuestListUri, app.postGuestListHandler()).Methods("POST")
 	app.Router.HandleFunc(routes.DeleteGuestListUri, app.guestListDeleteHandler()).Methods("DELETE")
+
+	app.Router.HandleFunc("/delete_all", app.deleteAllHandler()).Methods("DELETE")
+
 }
 
 type GuestList struct {
@@ -30,6 +33,13 @@ type NameResponse struct {
 	Name string `json:"name"`
 }
 
+func (app *App) deleteAllHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		app.deleteAll()
+	}
+}
+
+
 func (app *App) getGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestList, err := app.getGuestList()
@@ -39,8 +49,7 @@ func (app *App) getGuestListHandler() http.HandlerFunc {
 		}
 
 		response, _ := json.Marshal(guestList)
-		w.WriteHeader(http.StatusOK)
-		w.Write(response)
+		_, _ = w.Write(response)
 	}
 }
 
@@ -49,7 +58,12 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 
 		body, _ := ioutil.ReadAll(r.Body)
 		newGuest := Guest{}
-		_ = json.Unmarshal(body, &newGuest)
+		err := json.Unmarshal(body, &newGuest)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
 		newGuest.Name = mux.Vars(r)["name"]
 
 		if ok := newGuest.validate(app.Config.Tables.TableCount); !ok {
@@ -57,7 +71,13 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 			return
 		}
 
-		if ok, err := app.isSpaceAtTable(newGuest); err != nil || !ok {
+		expectedSpace, err := app.getExpectedSpaceAtTable(newGuest.Table);
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		if expectedSpace < 0 {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -69,22 +89,24 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 
 		response, _ := json.Marshal(NameResponse{newGuest.Name})
 
-		w.Write(response)
-		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(response)
 	}
 }
 
 func (app *App) guestListDeleteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
+		if !isValidGuestName(guestName) {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
 		_, err := app.dbClient.Exec(queries.DeleteGuest, guestName)
 		if err != nil {
 			panic(err)
 		}
 
-		w.WriteHeader(http.StatusOK)
 		response, _ := json.Marshal(NameResponse{Name: guestName})
-		w.Write(response)
+		_, _ = w.Write(response)
 	}
 }

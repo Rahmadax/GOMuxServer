@@ -12,11 +12,34 @@ const (
 		VALUES (?, ?, ?)
 	`
 
-	CountGuestsAtTable = `
+	GetGuest = `
+		SELECT table_number, accompanying_guests
+		FROM guests 
+		WHERE guest_name = ?
+	`
+
+	DeleteAll = `
+		DELETE FROM guests WHERE guest_name is not null
+	`
+
+	CountExpectedGuestsAtTable = `
 		SELECT
 		COALESCE(sum(accompanying_guests), 0) + COALESCE(count(guest_name), 0) 
 		FROM guests 
 		WHERE table_number=?
+	`
+
+	UpdateArrivedGuest = `
+		UPDATE guests
+		SET accompanying_guests = ?, time_arrived = ?
+		WHERE guest_name=?
+	`
+
+	CountPresentGuests = `
+		SELECT
+		COALESCE(sum(accompanying_guests), 0) + COALESCE(count(guest_name), 0) 
+		FROM guests
+		WHERE time_arrived IS NOT NULL
 	`
 
 	GetPresentGuests = `

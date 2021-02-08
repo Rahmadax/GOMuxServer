@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/guests"
 	"github.com/gorilla/mux"
 	"net/http"
 
@@ -15,7 +14,6 @@ type App struct {
 	Config   conf.Configuration
 	Router   *mux.Router
 	dbClient *sql.DB
-	guestsController
 }
 
 func NewApp(config conf.Configuration) (*App, error) {
@@ -36,7 +34,6 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (app *App) addEndpoints() {
 	app.addGuestListRoutes()
 	app.addGuestsRoutes()
-	app.addInvitationRoutes()
 	app.addSeatsRoutes()
 }
 
