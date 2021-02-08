@@ -1,6 +1,8 @@
 package conf
 
 import (
+	"flag"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"time"
@@ -9,7 +11,7 @@ import (
 type Configuration struct {
 	Database DatabaseConfig `yaml:"database"`
 	Server   ServerConfig   `yaml:"server"`
-	Routes   RoutesConfig   `yaml:"queries"`
+	Routes   RoutesConfig   `yaml:"routes"`
 
 	Tables TableConfig `yaml:"tables"`
 }
@@ -55,10 +57,13 @@ type RoutesConfig struct {
 	CountEmptySeatsUri string `yaml:"countEmptySeatsUri"`
 }
 
-func GetConfig(configFile string) (*Configuration, error) {
+func GetConfig(env string) (*Configuration, error) {
+	filepath := fmt.Sprintf("Api/config/%s.yml", env)
+	configFilePath := flag.String("config", filepath, "Path to config file")
+
 	var configuration *Configuration
 
-	file, err := ioutil.ReadFile(configFile)
+	file, err := ioutil.ReadFile(*configFilePath)
 	if err != nil {
 		return nil, err
 	}

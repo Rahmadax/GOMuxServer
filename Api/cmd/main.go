@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg"
@@ -19,8 +18,7 @@ func main() {
 }
 
 func run() error {
-	configFilePath := flag.String("config", "Api/config/pre_live.yml", "Path to config file")
-	config, err := conf.GetConfig(*configFilePath)
+	config, err := conf.GetConfig("pre_live")
 	if err != nil {
 		return err
 	}
