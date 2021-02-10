@@ -81,7 +81,7 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := app.insertGuest(newGuest); err != nil {
+		if err := app.addGuestToGuestList(newGuest); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -100,7 +100,19 @@ func (app *App) guestListDeleteHandler() http.HandlerFunc {
 			return
 		}
 
-		_, err := app.dbClient.Exec(queries.DeleteFromGuestList, time.Now(), guestName)
+		guestDetails := FullGuestDetails{}
+		err := app.dbClient.QueryRow(queries.GetGuestFullDetails, guestName).Scan(&guestDetails)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if guestDetails.TimeArrived != nil {
+			handleResponseError(http.StatusBadRequest, fmt.Sprintf("A guest that has already arrived cannot be removed from the guest list"), w)
+			return
+		}
+
+		_, err = app.dbClient.Exec(queries.DeleteFromGuestList, time.Now(), guestName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

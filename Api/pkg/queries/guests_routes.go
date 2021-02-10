@@ -17,7 +17,7 @@ const (
 		VALUES (?, ?, ?)
 	`
 
-	GetGuest = `
+	GetGuestFullDetails = `
 		SELECT table_number, accompanying_guests, time_arrived, time_left
 		FROM guests 
 		WHERE guest_name = ?

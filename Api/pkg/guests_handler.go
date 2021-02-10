@@ -78,8 +78,9 @@ func (app *App) guestArrivesHandler() http.HandlerFunc {
 			return
 		}
 
-		// Fewer guests than planned is always okay
 		accompanyingGuestDifference := updateGuestReq.AccompanyingGuests - storedGuestDetails.AccompanyingGuests
+
+		// Fewer guests than planned is always okay
 		if accompanyingGuestDifference > 0 {
 			expectedSpace, err := app.getExpectedSpaceAtTable(storedGuestDetails.Table)
 			if err != nil {
@@ -101,7 +102,6 @@ func (app *App) guestArrivesHandler() http.HandlerFunc {
 			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
 		response, _ := json.Marshal(NameResponse{guestName})
 		_, _ = w.Write(response)
 	}

@@ -1,7 +1,6 @@
 package pkg
 
 import (
-	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
 	"time"
 )
@@ -28,11 +27,6 @@ func (app *App) getGuestList() (GuestList, error){
 	return guestList, nil
 }
 
-func (app *App) deleteAll() {
-	_, err := app.dbClient.Exec(queries.DeleteAll)
-	fmt.Println(err)
-}
-
 func (app *App) getExpectedSpaceAtTable(tableNumber int) (int, error) {
 	currentGuestsAtTable := 0
 	err := app.dbClient.QueryRow(queries.CountExpectedGuestsAtTable, tableNumber).Scan(&currentGuestsAtTable)
@@ -52,7 +46,7 @@ func (app *App) updateArrivedGuest(name string, accompanyingGuests int) error {
 	return nil
 }
 
-func (app *App) insertGuest(newGuest Guest) error {
+func (app *App) addGuestToGuestList(newGuest Guest) error {
 	_, err := app.dbClient.Exec(queries.InsertGuest, newGuest.Name, newGuest.Table, newGuest.AccompanyingGuests)
 	if err != nil {
 		return err
@@ -95,7 +89,7 @@ func (app *App) getFullGuestDetails(name string) (FullGuestDetails, error){
 	var timeArrived *string
 	var timeLeft *string
 
-	err := app.dbClient.QueryRow(queries.GetGuest, name).Scan(&tableNumber, &expectedGuests, &timeArrived, &timeLeft)
+	err := app.dbClient.QueryRow(queries.GetGuestFullDetails, name).Scan(&tableNumber, &expectedGuests, &timeArrived, &timeLeft)
 	if err != nil {
 		return FullGuestDetails{}, err
 	}
