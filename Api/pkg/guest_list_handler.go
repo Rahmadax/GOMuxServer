@@ -16,8 +16,6 @@ func (app *App) addGuestListRoutes() {
 	app.Router.HandleFunc(routes.GetGuestListUri, app.getGuestListHandler()).Methods("GET")
 	app.Router.HandleFunc(routes.PostGuestListUri, app.postGuestListHandler()).Methods("POST")
 	app.Router.HandleFunc(routes.DeleteGuestListUri, app.guestListDeleteHandler()).Methods("DELETE")
-
-	app.Router.HandleFunc("/delete_all", app.deleteAllHandler()).Methods("DELETE")
 }
 
 type GuestList struct {
@@ -40,12 +38,6 @@ type FullGuestDetails struct {
 
 type NameResponse struct {
 	Name string `json:"name"`
-}
-
-func (app *App) deleteAllHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		app.deleteAll()
-	}
 }
 
 func (app *App) getGuestListHandler() http.HandlerFunc {
