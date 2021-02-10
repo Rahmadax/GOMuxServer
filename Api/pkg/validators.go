@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"errors"
 	"regexp"
 )
 
@@ -20,6 +21,23 @@ func (newGuest Guest) validate(tableCount int) bool {
 	}()
 
 	return <-validNameChan && <-validGuestNumChan && <-validTableNumChan
+}
+
+func validateUpdateGuestRequest(guestName string, updateGuestReq UpdateGuestRequest) error {
+	errString := ""
+	if !isValidGuestName(guestName) {
+		errString +=" invalid guest name "
+	}
+
+	if !isValidGuestNumber(updateGuestReq.AccompanyingGuests) {
+		errString +="invalid number of guests"
+	}
+
+	if errString != "" {
+		return errors.New(errString)
+	}
+
+	return nil
 }
 
 // general

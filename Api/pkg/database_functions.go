@@ -66,14 +66,14 @@ func (app *App) getPresentGuests() (PresentGuestList, error) {
 		return PresentGuestList{}, err
 	}
 
-	presentGuestList := PresentGuestList{}
+	presentGuestList := PresentGuestList{Guests:make([]PresentGuest, 0)}
 
 	for results.Next() {
 		var name string
 		var accompanyingGuests int
 		var timeArrived string
 
-		err = results.Scan(&name, &accompanyingGuests, &timeArrived)
+		err = results.Scan(&name, &accompanyingGuests, &timeArrived,)
 		if err != nil {
 			return PresentGuestList{}, err
 		}
@@ -81,32 +81,35 @@ func (app *App) getPresentGuests() (PresentGuestList, error) {
 		presentGuestList.Guests = append(presentGuestList.Guests,
 			PresentGuest{
 				Name: name,
-				TimeArrived: timeArrived,
 				AccompanyingGuests: accompanyingGuests,
+				TimeArrived: timeArrived,
 			})
 	}
 
 	return presentGuestList, nil
 }
 
-func (app *App) getGuest(name string) (Guest, error){
+func (app *App) getFullGuestDetails(name string) (FullGuestDetails, error){
 	var tableNumber int
 	var expectedGuests int
-	err := app.dbClient.QueryRow(queries.GetGuest, name).Scan(&tableNumber, &expectedGuests)
+	var timeArrived *string
+	var timeLeft *string
+
+	err := app.dbClient.QueryRow(queries.GetGuest, name).Scan(&tableNumber, &expectedGuests, &timeArrived, &timeLeft)
 	if err != nil {
-		return Guest{}, err
+		return FullGuestDetails{}, err
 	}
 
-	return Guest{Name: name, Table: tableNumber, AccompanyingGuests: expectedGuests}, nil
+	return FullGuestDetails{Name: name, Table: tableNumber, AccompanyingGuests: expectedGuests}, nil
 }
 
-func (app *App) countPresentGuests() int {
+func (app *App) countPresentGuests() (int, error) {
 	var currentPresentGuests int
 
 	err := app.dbClient.QueryRow(queries.CountPresentGuests).Scan(&currentPresentGuests)
 	if err != nil {
-		panic(err)
+		return 0, err
 	}
 
-	return currentPresentGuests
+	return currentPresentGuests, nil
 }

@@ -7,14 +7,15 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func (app *App) addGuestsRoutes() {
 	routes := app.Config.Routes
 
 	app.Router.HandleFunc(routes.GetGuestsUri, app.getGuestsHandler()).Methods("GET")
-	app.Router.HandleFunc(routes.PutGuestsUri, app.updateGuestsHandler()).Methods("PUT")
-	app.Router.HandleFunc(routes.DeleteGuestsUri, app.deleteGuestsHandler()).Methods("DELETE")
+	app.Router.HandleFunc(routes.PutGuestsUri, app.guestArrivesHandler()).Methods("PUT")
+	app.Router.HandleFunc(routes.DeleteGuestsUri, app.guestLeavesHandler()).Methods("DELETE")
 
 	app.Router.HandleFunc(routes.GetInvitationUri, app.handleInvitationGet()).Methods("GET")
 }
@@ -25,13 +26,14 @@ type PresentGuestList struct {
 }
 
 type PresentGuest struct {
-	Name               string `json:"name" db:"guest_name"`
-	TimeArrived        string `json:"time_arrived" db:"time_arrived"`
-	AccompanyingGuests int    `json:"accompanying_guests" db:"accompanying_guests"`
+	Name               string  `json:"name" db:"guest_name"`
+	AccompanyingGuests int     `json:"accompanying_guests" db:"accompanying_guests"`
+	TimeArrived        string  `json:"time_arrived" db:"time_arrived"`
+	TimeLeft           *string `json:",omitempty" db:"time_left"`
 }
 
 type UpdateGuestRequest struct {
-	AccompanyingGuests int    `json:"accompanying_guests" db:"accompanying_guests"`
+	AccompanyingGuests int `json:"accompanying_guests" db:"accompanying_guests"`
 }
 
 // Guests
@@ -39,8 +41,7 @@ func (app *App) getGuestsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		presentGuestList, err := app.getPresentGuests()
 		if err != nil {
-			fmt.Println(err.Error())
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -49,30 +50,31 @@ func (app *App) getGuestsHandler() http.HandlerFunc {
 	}
 }
 
-func (app *App) updateGuestsHandler() http.HandlerFunc {
+func (app *App) guestArrivesHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, _ := ioutil.ReadAll(r.Body)
 		updateGuestReq := UpdateGuestRequest{}
 		err := json.Unmarshal(body, &updateGuestReq)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, err.Error(), w)
 			return
 		}
 
 		guestName := mux.Vars(r)["name"]
-		if !isValidGuestName(guestName) {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		if !isValidGuestNumber(updateGuestReq.AccompanyingGuests) {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		storedGuestDetails, err := app.getGuest(guestName)
+		err = validateUpdateGuestRequest(guestName, updateGuestReq)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, err.Error(), w)
+			return
+		}
+
+		storedGuestDetails, err := app.getFullGuestDetails(guestName)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if storedGuestDetails.TimeArrived != nil {
+			handleResponseError(http.StatusBadRequest, "Guest has already arrived", w)
 			return
 		}
 
@@ -81,41 +83,41 @@ func (app *App) updateGuestsHandler() http.HandlerFunc {
 		if accompanyingGuestDifference > 0 {
 			expectedSpace, err := app.getExpectedSpaceAtTable(storedGuestDetails.Table)
 			if err != nil {
-				w.WriteHeader(http.StatusBadRequest)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
 			// Is there going to be enough space for everyone who is expected + additional newcomers?
 			newExpectedSpace := expectedSpace - accompanyingGuestDifference
 			if newExpectedSpace < 0 {
-				w.WriteHeader(http.StatusBadRequest)
+				handleResponseError(http.StatusBadRequest, fmt.Sprintf("Not enough space expected at table. %d spaces left", expectedSpace + storedGuestDetails.AccompanyingGuests + 1), w)
 				return
 			}
 		}
 
 		err = app.updateArrivedGuest(guestName, updateGuestReq.AccompanyingGuests)
 		if err != nil {
-			fmt.Print(err)
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		response, _ := json.Marshal(NameResponse{guestName})
 		_, _ = w.Write(response)
 	}
 }
 
-func (app *App) deleteGuestsHandler() http.HandlerFunc {
+func (app *App) guestLeavesHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
 		if !isValidGuestName(guestName) {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", guestName), w)
 			return
 		}
 
-		_, err := app.dbClient.Exec(queries.DeleteGuest, guestName)
+		_, err := app.dbClient.Exec(queries.GuestLeaves, time.Now(), guestName)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 

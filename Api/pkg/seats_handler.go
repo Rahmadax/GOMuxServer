@@ -17,11 +17,15 @@ type SeatsEmptyResponse struct {
 
 func (app *App) handleCountEmptySeats() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		presentGuestCount := app.countPresentGuests()
+		presentGuestCount, err := app.countPresentGuests()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
-		maximumSeats := app.Config.Tables.TableCount * app.Config.Tables.TableCapacity
+		capacity := app.Config.Tables.TableCount * app.Config.Tables.TableCapacity
 
-		response, _ := json.Marshal(SeatsEmptyResponse{maximumSeats - presentGuestCount})
+		response, _ := json.Marshal(SeatsEmptyResponse{capacity - presentGuestCount})
 		_, _ = w.Write(response)
 	}
 }

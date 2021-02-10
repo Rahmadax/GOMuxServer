@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
 	"github.com/gorilla/mux"
 	"io/ioutil"
@@ -24,9 +25,17 @@ type GuestList struct {
 }
 
 type Guest struct {
-	Name               string `json:"name" db:"guest_name"`
-	Table              int    `json:"table" db:"table_number"`
-	AccompanyingGuests int    `json:"accompanying_guests" db:"accompanying_guests"`
+	Name               string  `json:"name" db:"guest_name"`
+	Table              int     `json:"table" db:"table_number"`
+	AccompanyingGuests int     `json:"accompanying_guests" db:"accompanying_guests"`
+}
+
+type FullGuestDetails struct {
+	Name               string  `db:"guest_name"`
+	Table              int     `db:"table_number"`
+	AccompanyingGuests int     `db:"accompanying_guests"`
+	TimeArrived        *string `db:"time_arrived"`
+	TimeLeft           *string `db:"time_left"`
 }
 
 type NameResponse struct {
@@ -39,12 +48,11 @@ func (app *App) deleteAllHandler() http.HandlerFunc {
 	}
 }
 
-
 func (app *App) getGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestList, err := app.getGuestList()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
@@ -60,35 +68,34 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 		newGuest := Guest{}
 		err := json.Unmarshal(body, &newGuest)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, "Invalid Request Body", w)
 			return
 		}
 
 		newGuest.Name = mux.Vars(r)["name"]
-
 		if ok := newGuest.validate(app.Config.Tables.TableCount); !ok {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", newGuest.Name), w)
 			return
 		}
 
-		expectedSpace, err := app.getExpectedSpaceAtTable(newGuest.Table);
+		expectedSpace, err := app.getExpectedSpaceAtTable(newGuest.Table)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		if expectedSpace < 0 {
-			w.WriteHeader(http.StatusBadRequest)
+		if expectedSpace-newGuest.AccompanyingGuests-1 < 0 {
+			handleResponseError(http.StatusBadRequest, fmt.Sprintf("Not enough space expected at table. %d spaces left", expectedSpace), w)
 			return
 		}
 
 		if err := app.insertGuest(newGuest); err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		response, _ := json.Marshal(NameResponse{newGuest.Name})
-
 		_, _ = w.Write(response)
 	}
 }
@@ -97,13 +104,14 @@ func (app *App) guestListDeleteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
 		if !isValidGuestName(guestName) {
-			w.WriteHeader(http.StatusBadRequest)
+			handleResponseError(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", guestName), w)
 			return
 		}
 
-		_, err := app.dbClient.Exec(queries.DeleteGuest, time.Now(), guestName)
+		_, err := app.dbClient.Exec(queries.DeleteFromGuestList, time.Now(), guestName)
 		if err != nil {
-			panic(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		response, _ := json.Marshal(NameResponse{Name: guestName})
