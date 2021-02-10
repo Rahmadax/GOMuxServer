@@ -45,13 +45,13 @@ const (
 	GetPresentGuests = `
 		SELECT guest_name, accompanying_guests, time_arrived 
 		FROM guests 
-		WHERE time_arrived IS NOT NULL 
+		WHERE time_arrived IS NOT NULL AND time_left IS NULL
 		ORDER BY time_arrived asc, guest_name asc
 	`
 
 	DeleteGuest = `
-		DELETE
-		FROM guests 
+		UPDATE guests 
+		time_left = ?
 		WHERE guest_name = ?
 	`
 )

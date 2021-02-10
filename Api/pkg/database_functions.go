@@ -63,7 +63,7 @@ func (app *App) insertGuest(newGuest Guest) error {
 func (app *App) getPresentGuests() (PresentGuestList, error) {
 	results, err := app.dbClient.Query(queries.GetPresentGuests)
 	if err != nil {
-		panic(err)
+		return PresentGuestList{}, err
 	}
 
 	presentGuestList := PresentGuestList{}

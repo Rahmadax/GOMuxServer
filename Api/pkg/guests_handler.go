@@ -39,6 +39,7 @@ func (app *App) getGuestsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		presentGuestList, err := app.getPresentGuests()
 		if err != nil {
+			fmt.Println(err.Error())
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

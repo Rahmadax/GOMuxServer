@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func (app *App) addGuestListRoutes() {
@@ -16,7 +17,6 @@ func (app *App) addGuestListRoutes() {
 	app.Router.HandleFunc(routes.DeleteGuestListUri, app.guestListDeleteHandler()).Methods("DELETE")
 
 	app.Router.HandleFunc("/delete_all", app.deleteAllHandler()).Methods("DELETE")
-
 }
 
 type GuestList struct {
@@ -101,7 +101,7 @@ func (app *App) guestListDeleteHandler() http.HandlerFunc {
 			return
 		}
 
-		_, err := app.dbClient.Exec(queries.DeleteGuest, guestName)
+		_, err := app.dbClient.Exec(queries.DeleteGuest, time.Now(), guestName)
 		if err != nil {
 			panic(err)
 		}
