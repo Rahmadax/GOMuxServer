@@ -1,18 +1,18 @@
-package queries
+package guests_repo
 
 const (
 
 	// SELECT
-	GetGuestList = `
-		SELECT guest_name, table_number, accompanying_guests 
-		FROM guests 
-		ORDER BY table_number asc, guest_name asc
-	`
-
 	GetGuestFullDetails = `
 		SELECT table_number, accompanying_guests, time_arrived, time_left
 		FROM guests 
 		WHERE guest_name = ?
+	`
+
+	GetGuestList = `
+		SELECT guest_name, table_number, accompanying_guests 
+		FROM guests 
+		ORDER BY table_number asc, guest_name asc
 	`
 
 	GetPresentGuests = `
@@ -20,12 +20,6 @@ const (
 		FROM guests 
 		WHERE time_arrived IS NOT NULL AND time_left IS NULL
 		ORDER BY time_arrived asc, guest_name asc
-	`
-
-	// INSERT
-	InsertGuest = `
-		INSERT INTO guests (guest_name, table_number, accompanying_guests)
-		VALUES (?, ?, ?)
 	`
 
 	// UPDATE
@@ -45,6 +39,12 @@ const (
 	DeleteFromGuestList = `
 		DELETE FROM guests
 		WHERE guest_name = ?
+	`
+
+	// INSERT
+	InsertGuest = `
+		INSERT INTO guests (guest_name, table_number, accompanying_guests)
+		VALUES (?, ?, ?)
 	`
 
 	// Count

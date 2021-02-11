@@ -22,8 +22,10 @@ type ServerConfig struct {
 }
 
 type TableConfig struct {
-	TableCount    int `yaml:"table_count"`
-	TableCapacity int `yaml:"table_capacity"`
+	TableCapacityArray []int `yaml:"table_capacities"`
+	TableCapacityMap   map[int]int
+	TableCount         int
+	TotalCapacity      int
 }
 
 type DatabaseConfig struct {
@@ -36,8 +38,6 @@ type DatabaseConfig struct {
 	Timeout  string `yaml:"timeout"`
 
 	SSLMode               string        `yaml:"ssl_mode"`
-	SSLCert               string        `yaml:"ssl_cert"`
-	SSLKey                string        `yaml:"ssl_key"`
 	MaxIdleConns          int           `yaml:"max_idle_conns"`
 	MaxOpenConns          int           `yaml:"max_open_conns"`
 	MaxConnLifeTimeMinute time.Duration `yaml:"max_conn_life_time_minute"`
@@ -58,20 +58,41 @@ type RoutesConfig struct {
 }
 
 func GetConfig(env string) (*Configuration, error) {
+	fmt.Println("Reading Config")
 	filepath := fmt.Sprintf("Api/config/%s.yml", env)
 	configFilePath := flag.String("config", filepath, "Path to config file")
 
-	var configuration *Configuration
+	var config *Configuration
 
 	file, err := ioutil.ReadFile(*configFilePath)
 	if err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(file, &configuration)
+	err = yaml.Unmarshal(file, &config)
 	if err != nil {
 		return nil, err
 	}
 
-	return configuration, nil
+	config.calculateTableValues()
+
+	return config, nil
+}
+
+func (config *Configuration) calculateTableValues() {
+	tableCount := 0
+	totalCapacity := 0
+	tableCapacityMap := make(map[int]int)
+
+	for i, tableSize := range config.Tables.TableCapacityArray {
+		tableCount++
+		totalCapacity += tableSize
+		tableCapacityMap[i] = tableSize
+	}
+
+	fmt.Println(fmt.Sprintf("There are %d tables, with a total capacity of %d", tableCount, totalCapacity))
+
+	config.Tables.TableCount = tableCount
+	config.Tables.TotalCapacity = totalCapacity
+	config.Tables.TableCapacityMap = tableCapacityMap
 }

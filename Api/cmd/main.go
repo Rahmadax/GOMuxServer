@@ -28,7 +28,7 @@ func run() error {
 		return err
 	}
 
-	println("Listening on port - " + config.Server.HostPort)
+	fmt.Println(fmt.Sprintf("\nListening on port - %s", config.Server.HostPort))
 	return http.ListenAndServe(":"+config.Server.HostPort, app.Router)
 }
 

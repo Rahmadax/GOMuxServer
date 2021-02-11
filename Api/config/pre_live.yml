@@ -6,8 +6,7 @@ server:
       - "http://localhost:3000"
 
 tables:
-  table_count: 10
-  table_capacity: 10
+  table_capacities: [1,1,2,3,5,7,13,21,34,55,89,144]
 
 database:
   host: "localhost"
