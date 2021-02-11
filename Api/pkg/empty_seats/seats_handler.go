@@ -9,7 +9,7 @@ import (
 )
 
 type EmptySeatsService interface {
-	countEmptySeats() (int, error)
+	countPresentGuests() (int, error)
 }
 
 type emptySeatsHandler struct {
@@ -17,26 +17,28 @@ type emptySeatsHandler struct {
 	service EmptySeatsService
 }
 
-func NewEmptySeatsHandler(service EmptySeatsService)  *emptySeatsHandler {
+func NewEmptySeatsHandler(service EmptySeatsService, config conf.Configuration)  *emptySeatsHandler {
 	return &emptySeatsHandler {
+		config: config,
 		service: service,
 	}
 }
 
-func AddGuestListRoutes(routes conf.RoutesConfig, service EmptySeatsService, router *mux.Router){
-	handler := NewEmptySeatsHandler(service)
+func AddGuestListRoutes(config conf.Configuration, service EmptySeatsService, router *mux.Router){
+	handler := NewEmptySeatsHandler(service,config)
 
-	router.HandleFunc(routes.CountEmptySeatsUri, handler.countEmptySeatsHandler()).Methods("GET")
+	router.HandleFunc(config.Routes.CountEmptySeatsUri, handler.countEmptySeatsHandler()).Methods("GET")
 }
 
 func (esHandler *emptySeatsHandler) countEmptySeatsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		presentGuestCount, err := esHandler.service.countEmptySeats()
+		presentGuestCount, err := esHandler.service.countPresentGuests()
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			_, _ = w.Write([]byte(err.Error()))
 		}
 
+		println(esHandler.config.Tables.TotalCapacity)
 		response, _ := json.Marshal(models.SeatsEmptyResponse{SeatsEmpty: esHandler.config.Tables.TotalCapacity - presentGuestCount})
 		_, _ = w.Write(response)
 	}

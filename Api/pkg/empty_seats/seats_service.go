@@ -13,7 +13,7 @@ type emptySeatsService struct {
 	guestsRepo GuestsRepository
 }
 
-func (esService emptySeatsService) countEmptySeats() (int, error) {
+func (esService emptySeatsService) countPresentGuests() (int, error) {
 	presentGuestCount, err := esService.guestsRepo.CountPresentGuests()
 	if err != nil {
 		return 0, err

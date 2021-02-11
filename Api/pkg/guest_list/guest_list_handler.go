@@ -2,7 +2,6 @@ package guest_list
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/gorilla/mux"
@@ -17,9 +16,10 @@ type GuestListService interface {
 }
 
 type SystemValidator interface {
-	IsValidGuestName(name string) bool
-	IsValidGuestNumber(accompanyingGuests int) bool
-	IsValidTableNumber(tableNumber int) bool
+	ValidateGuestName(name string) error
+	IsValidGuestNumber(accompanyingGuests int) error
+	IsValidTableNumber(tableNumber int) error
+	ValidateNewGuest(newGuest models.Guest) error
 }
 
 type guestListHandler struct {
@@ -67,14 +67,16 @@ func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 		}
 
 		newGuest.Name = mux.Vars(r)["name"]
-		//if ok := newGuest.validate(glHandler.config.Tables.TableCount); !ok {
-		//	handleErrorResponse(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", newGuest.Name), w)
-		//	return
-		//}
+		err = glHandler.validator.ValidateNewGuest(newGuest)
+		if err != nil  {
+			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			return
+		}
 
 		err = glHandler.service.addToGuestList(newGuest)
 		if err != nil {
 			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			return
 		}
 
 		w.WriteHeader(http.StatusCreated)
@@ -86,12 +88,13 @@ func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 func (glHandler *guestListHandler) guestListDeleteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
-		if !glHandler.validator.IsValidGuestName(guestName) {
-			handleErrorResponse(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", guestName), w)
+		err := glHandler.validator.ValidateGuestName(guestName)
+		if err != nil {
+			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
 			return
 		}
 
-		err := glHandler.service.removeFromGuestList(guestName)
+		err = glHandler.service.removeFromGuestList(guestName)
 		if err != nil {
 			handleErrorResponse(http.StatusInternalServerError, "Something went wrong", w)
 		}

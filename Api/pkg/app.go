@@ -37,7 +37,7 @@ func NewApp(config conf.Configuration) (*App, error) {
 	guest_list.AddGuestListRoutes(config.Routes, guestListService, validator, app.Router)
 
 	emptySeatsService := empty_seats.NewEmptySeatsService(config, guestsRepo)
-	empty_seats.AddGuestListRoutes(config.Routes, emptySeatsService, app.Router)
+	empty_seats.AddGuestListRoutes(config, emptySeatsService, app.Router)
 
 	return app, nil
 }

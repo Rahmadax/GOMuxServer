@@ -2,7 +2,6 @@ package guests
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/gorilla/mux"
@@ -17,9 +16,10 @@ type GuestsService interface {
 }
 
 type SystemValidator interface {
-	IsValidGuestName(name string) bool
-	IsValidGuestNumber(accompanyingGuests int) bool
-	IsValidTableNumber(tableNumber int) bool
+	ValidateGuestName(name string) error
+	IsValidGuestNumber(accompanyingGuests int) error
+	IsValidTableNumber(tableNumber int) error
+	ValidateArrivingGuest(guestName string, accompanyingGuests int) error
 }
 
 type guestsHandler struct {
@@ -69,11 +69,11 @@ func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
 		}
 
 		guestName := mux.Vars(r)["name"]
-		//err = svalidateUpdateGuestRequest(guestName, updateGuestReq)
-		//if err != nil {
-		//	handleErrorResponse(http.StatusBadRequest, err.Error(), w)
-		//	return
-		//}
+		err = guestsHandler.validator.ValidateArrivingGuest(guestName, updateGuestReq.AccompanyingGuests)
+		if err != nil {
+			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			return
+		}
 
 		err = guestsHandler.service.guestArrives(updateGuestReq, guestName)
 		if err != nil {
@@ -87,12 +87,13 @@ func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
 func (guestsHandler *guestsHandler) guestLeavesHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
-		if !guestsHandler.validator.IsValidGuestName(guestName) {
-			handleErrorResponse(http.StatusBadRequest, fmt.Sprintf("Invalid guest name: %s", guestName), w)
+		err := guestsHandler.validator.ValidateGuestName(guestName)
+		if err != nil {
+			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
 			return
 		}
 
-		err := guestsHandler.service.guestLeaves(guestName)
+		err = guestsHandler.service.guestLeaves(guestName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
