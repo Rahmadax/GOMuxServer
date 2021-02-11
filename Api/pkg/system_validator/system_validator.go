@@ -18,12 +18,12 @@ func (sv systemValidator) ValidateNewGuest(newGuest models.Guest) error {
 		return err
 	}
 
-	err = sv.IsValidTableNumber(newGuest.Table)
+	err = sv.ValidateTableNumber(newGuest.Table)
 	if err != nil {
 		return err
 	}
 
-	err = sv.IsValidGuestNumber(newGuest.AccompanyingGuests)
+	err = sv.ValidateAccompanyingGuests(newGuest.AccompanyingGuests)
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (sv systemValidator) ValidateArrivingGuest(guestName string, accompanyingGu
 		return err
 	}
 
-	err = sv.IsValidGuestNumber(accompanyingGuests)
+	err = sv.ValidateAccompanyingGuests(accompanyingGuests)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (sv systemValidator) ValidateGuestName(name string) error {
 	return nil
 }
 
-func (sv systemValidator) IsValidGuestNumber(accompanyingGuests int) error {
+func (sv systemValidator) ValidateAccompanyingGuests(accompanyingGuests int) error {
 	if accompanyingGuests < 0 {
 		return errors.New("guest can't have negative accompanying guests")
 	}
@@ -65,7 +65,7 @@ func (sv systemValidator) IsValidGuestNumber(accompanyingGuests int) error {
 	return nil
 }
 
-func (sv systemValidator) IsValidTableNumber(tableNumber int) error {
+func (sv systemValidator) ValidateTableNumber(tableNumber int) error {
 	if tableNumber > sv.config.Tables.TableCount {
 		return errors.New(fmt.Sprintf("there are only %d tables", sv.config.Tables.TableCount))
 	}

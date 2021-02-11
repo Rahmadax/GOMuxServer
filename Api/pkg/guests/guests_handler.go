@@ -17,8 +17,6 @@ type GuestsService interface {
 
 type SystemValidator interface {
 	ValidateGuestName(name string) error
-	IsValidGuestNumber(accompanyingGuests int) error
-	IsValidTableNumber(tableNumber int) error
 	ValidateArrivingGuest(guestName string, accompanyingGuests int) error
 }
 
