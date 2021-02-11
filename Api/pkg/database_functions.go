@@ -38,7 +38,7 @@ func (app *App) getExpectedSpaceAtTable(tableNumber int) (int, error) {
 }
 
 func (app *App) updateArrivedGuest(name string, accompanyingGuests int) error {
-	_, err := app.dbClient.Exec(queries.UpdateArrivedGuest, accompanyingGuests, time.Now(), name)
+	_, err := app.dbClient.Exec(queries.UpdateGuestArrives, accompanyingGuests, time.Now(), name)
 	if err != nil {
 		return err
 	}
@@ -46,8 +46,17 @@ func (app *App) updateArrivedGuest(name string, accompanyingGuests int) error {
 	return nil
 }
 
-func (app *App) addGuestToGuestList(newGuest Guest) error {
+func (app *App) addToGuestList(newGuest Guest) error {
 	_, err := app.dbClient.Exec(queries.InsertGuest, newGuest.Name, newGuest.Table, newGuest.AccompanyingGuests)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (app *App) deleteFromGuestList(guestName string) error {
+	_, err := app.dbClient.Exec(queries.DeleteFromGuestList, time.Now(), guestName)
 	if err != nil {
 		return err
 	}
@@ -106,4 +115,13 @@ func (app *App) countPresentGuests() (int, error) {
 	}
 
 	return currentPresentGuests, nil
+}
+
+func (app *App) updateGuestLeaves(guestName string) error {
+	_, err := app.dbClient.Exec(queries.UpdateGuestLeaves, time.Now(), guestName)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

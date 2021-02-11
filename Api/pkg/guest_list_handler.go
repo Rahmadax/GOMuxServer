@@ -3,11 +3,9 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 func (app *App) addGuestListRoutes() {
@@ -81,7 +79,7 @@ func (app *App) postGuestListHandler() http.HandlerFunc {
 			return
 		}
 
-		if err := app.addGuestToGuestList(newGuest); err != nil {
+		if err := app.addToGuestList(newGuest); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -100,8 +98,7 @@ func (app *App) guestListDeleteHandler() http.HandlerFunc {
 			return
 		}
 
-		guestDetails := FullGuestDetails{}
-		err := app.dbClient.QueryRow(queries.GetGuestFullDetails, guestName).Scan(&guestDetails)
+		guestDetails, err := app.getFullGuestDetails(guestName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
@@ -112,7 +109,7 @@ func (app *App) guestListDeleteHandler() http.HandlerFunc {
 			return
 		}
 
-		_, err = app.dbClient.Exec(queries.DeleteFromGuestList, time.Now(), guestName)
+		err = app.deleteFromGuestList(guestName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

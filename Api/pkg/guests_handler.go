@@ -3,11 +3,9 @@ package pkg
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/queries"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 func (app *App) addGuestsRoutes() {
@@ -115,7 +113,7 @@ func (app *App) guestLeavesHandler() http.HandlerFunc {
 			return
 		}
 
-		_, err := app.dbClient.Exec(queries.GuestLeaves, time.Now(), guestName)
+		err := app.updateGuestLeaves(guestName)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
