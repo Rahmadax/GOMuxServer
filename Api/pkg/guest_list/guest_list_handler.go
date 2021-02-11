@@ -17,8 +17,6 @@ type GuestListService interface {
 
 type SystemValidator interface {
 	ValidateGuestName(name string) error
-	IsValidGuestNumber(accompanyingGuests int) error
-	IsValidTableNumber(tableNumber int) error
 	ValidateNewGuest(newGuest models.Guest) error
 }
 
