@@ -25,7 +25,7 @@ func setupServiceTests(t *testing.T) (*guestListService, *MockGuestsRepository) 
 }
 
 // Get guest list
-func TestGetGuestListSuccess(t *testing.T) {
+func Test_GetGuestList_Success(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
@@ -39,7 +39,7 @@ func TestGetGuestListSuccess(t *testing.T) {
 	assert.Equal(t, res, guestList)
 }
 
-func TestGetGuestListFail_DBErrors(t *testing.T) {
+func Test_GetGuestListFail_DBErrors(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 	mockGuestRepo.EXPECT().GetGuestList().Return(models.GuestList{}, errors.New("internal Server Error")).Times(1)
 
@@ -49,7 +49,7 @@ func TestGetGuestListFail_DBErrors(t *testing.T) {
 }
 
 // Add to guest list
-func TestAddToGuestListFail_Success(t *testing.T) {
+func Test_AddToGuestListFail_Success(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	newGuest := models.Guest{
@@ -66,7 +66,7 @@ func TestAddToGuestListFail_Success(t *testing.T) {
 	assert.NoError(t, res)
 }
 
-func TestAddToGuestListFail_NotEnoughExpectedSpace(t *testing.T) {
+func Test_AddToGuestList_NotEnoughExpectedSpace(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	newGuest := models.Guest{
@@ -81,7 +81,7 @@ func TestAddToGuestListFail_NotEnoughExpectedSpace(t *testing.T) {
 	assert.EqualError(t, res, "Not enough space expected at table. 3 spaces left")
 }
 
-func TestAddToGuestListFail_GetExpectedGuestsAtTableErrors(t *testing.T) {
+func Test_AddToGuestList_GetExpectedGuestsAtTableErrors(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	newGuest := models.Guest{
@@ -96,7 +96,7 @@ func TestAddToGuestListFail_GetExpectedGuestsAtTableErrors(t *testing.T) {
 	assert.EqualError(t, res, "something Went wrong")
 }
 
-func TestAddToGuestListFail_AddToGuestListErrors(t *testing.T) {
+func Test_AddToGuestList_AddToGuestListErrors(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	newGuest := models.Guest{
@@ -113,7 +113,7 @@ func TestAddToGuestListFail_AddToGuestListErrors(t *testing.T) {
 }
 
 // Remove from guest list
-func TestRemoveFromGuestListSuccess(t *testing.T) {
+func Test_RemoveFromGuestList_Success(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
@@ -128,7 +128,7 @@ func TestRemoveFromGuestListSuccess(t *testing.T) {
 	assert.NoError(t, res)
 }
 
-func TestRemoveFromGuestListFailure_GuestIsAlreadyCheckedIn(t *testing.T) {
+func Test_RemoveFromGuestList_GuestIsAlreadyCheckedIn(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	arrivalTime := "2019-10-19T17:12:30.174"
@@ -140,7 +140,7 @@ func TestRemoveFromGuestListFailure_GuestIsAlreadyCheckedIn(t *testing.T) {
 	assert.EqualError(t, res, "A guest that has already arrived cannot be removed from the guest list")
 }
 
-func TestRemoveFromGuestListFailure_GetFullDetailsDbErrors(t *testing.T) {
+func Test_RemoveFromGuestList_GetFullDetailsDbErrors(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
@@ -151,7 +151,7 @@ func TestRemoveFromGuestListFailure_GetFullDetailsDbErrors(t *testing.T) {
 	assert.EqualError(t, res, "something went wrong")
 }
 
-func TestRemoveFromGuestListFailure_DeleteFromGuestListDbErrors(t *testing.T) {
+func Test_RemoveFromGuestList_DeleteFromGuestListDbErrors(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
 	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(

@@ -5,3 +5,6 @@ Api/pkg/guest_list/mock_guest_list_service.go
 
 Api/pkg/guests/mock_guests_service.go
 Api/pkg/guests/mock_guests_handler.go
+
+Api/pkg/empty_seats/mock_seats_service.go
+Api/pkg/empty_seats/mock_seats_handler.go

@@ -33,7 +33,8 @@ func (glHandler *guestListHandler) getGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		res, err := glHandler.getGuestList()
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		response, _ := json.Marshal(res)
@@ -47,15 +48,17 @@ func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 		newGuest := models.Guest{}
 		err := json.Unmarshal(body, &newGuest)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		res, err := glHandler.postGuestList(newGuest, mux.Vars(r)["name"])
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
+		w.WriteHeader(http.StatusCreated)
 		response, _ := json.Marshal(res)
 		_, _ = w.Write(response)
 	}
@@ -66,7 +69,7 @@ func (glHandler *guestListHandler) guestListDeleteHandler() http.HandlerFunc {
 		guestName := mux.Vars(r)["name"]
 		err := glHandler.guestListDelete(guestName)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -108,12 +111,6 @@ func (glHandler *guestListHandler) guestListDelete(guestName string) error {
 	}
 
 	return nil
-}
-
-// Util
-func handleErrorResponse(statusCode int, errMessage string, w http.ResponseWriter) {
-	w.WriteHeader(statusCode)
-	_, _ = w.Write([]byte(errMessage))
 }
 
 // Init

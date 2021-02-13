@@ -1,167 +1,45 @@
-package guest_list
+package empty_seats
 
 import (
 	"errors"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func setupServiceTests(t *testing.T) (*guestListService, *MockGuestsRepository) {
+func setupServiceTests(t *testing.T) (*emptySeatsService, *MockGuestsRepository) {
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 
 	guestRepoMock := NewMockGuestsRepository(controller)
-	tableConfig := conf.TableConfig{
-		TableCapacityArray: []int{1, 1, 2, 3, 5, 8},
-		TableCapacityMap:   map[int]int{0: 1, 1: 1, 2: 2, 3: 3, 4: 5, 5: 8},
-		TableCount:         6, TotalCapacity: 20,
-	}
-	glService := NewGuestListService(conf.Configuration{Tables: tableConfig}, guestRepoMock)
 
-	return glService, guestRepoMock
+	esService := NewEmptySeatsService(conf.Configuration{}, guestRepoMock)
+
+	return esService, guestRepoMock
 }
 
-// Get guest list
-func TestGetGuestListSuccess(t *testing.T) {
+func Test_countPresentGuests_Success(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
-	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
-	guest2 := models.Guest{Name: "Bill", Table: 3, AccompanyingGuests: 6}
-	guestList := models.GuestList{Guests: []models.Guest{guest1, guest2}}
+	mockGuestRepo.EXPECT().CountPresentGuests().Return(10, nil).Times(1)
 
-	mockGuestRepo.EXPECT().GetGuestList().Return(guestList, nil).Times(1)
-
-	res, returnedError := glService.getGuestList()
+	res, returnedError := glService.countPresentGuests()
 	assert.NoError(t, returnedError)
-	assert.Equal(t, res, guestList)
+	assert.Equal(t, res, 10)
 }
 
-func TestGetGuestListFail_DBErrors(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-	mockGuestRepo.EXPECT().GetGuestList().Return(models.GuestList{}, errors.New("internal Server Error")).Times(1)
-
-	res, returnedError := glService.getGuestList()
-	assert.Error(t, returnedError)
-	assert.Equal(t, res, models.GuestList{})
-}
-
-// Add to guest list
-func TestAddToGuestListFail_Success(t *testing.T) {
+func Test_countPresentGuests_Failure(t *testing.T) {
 	glService, mockGuestRepo := setupServiceTests(t)
 
-	newGuest := models.Guest{
-		Name:               "Alyx",
-		Table:              5,
-		AccompanyingGuests: 2,
-	}
+	mockGuestRepo.EXPECT().CountPresentGuests().Return(0, errors.New("something went wrong")).Times(1)
 
-	mockGuestRepo.EXPECT().GetExpectedGuestsAtTable(newGuest.Table).Return(2, nil).Times(1)
-
-	mockGuestRepo.EXPECT().AddToGuestList(newGuest).Return(nil)
-
-	res := glService.addToGuestList(newGuest)
-	assert.NoError(t, res)
+	res, returnedError := glService.countPresentGuests()
+	assert.EqualError(t, returnedError,"something went wrong")
+	assert.Equal(t, res, 0)
 }
 
-func TestAddToGuestListFail_NotEnoughExpectedSpace(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
 
-	newGuest := models.Guest{
-		Name:               "Alyx",
-		Table:              5,
-		AccompanyingGuests: 5,
-	}
 
-	mockGuestRepo.EXPECT().GetExpectedGuestsAtTable(newGuest.Table).Return(2, nil).Times(1)
 
-	res := glService.addToGuestList(newGuest)
-	assert.EqualError(t, res, "Not enough space expected at table. 3 spaces left")
-}
 
-func TestAddToGuestListFail_GetExpectedGuestsAtTableErrors(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	newGuest := models.Guest{
-		Name:               "Alyx",
-		Table:              5,
-		AccompanyingGuests: 5,
-	}
-
-	mockGuestRepo.EXPECT().GetExpectedGuestsAtTable(newGuest.Table).Return(0, errors.New("something Went wrong")).Times(1)
-
-	res := glService.addToGuestList(newGuest)
-	assert.EqualError(t, res, "something Went wrong")
-}
-
-func TestAddToGuestListFail_AddToGuestListErrors(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	newGuest := models.Guest{
-		Name:               "Alyx",
-		Table:              5,
-		AccompanyingGuests: 2,
-	}
-
-	mockGuestRepo.EXPECT().GetExpectedGuestsAtTable(newGuest.Table).Return(2, nil).Times(1)
-
-	mockGuestRepo.EXPECT().AddToGuestList(newGuest).Return(errors.New("something Went wrong"))
-	res := glService.addToGuestList(newGuest)
-	assert.EqualError(t, res, "something Went wrong")
-}
-
-// Remove from guest list
-func TestRemoveFromGuestListSuccess(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
-		models.FullGuestDetails{Name: "GordonFreeman", Table: 10, AccompanyingGuests: 5}, nil,
-	).Times(1)
-
-	mockGuestRepo.EXPECT().DeleteFromGuestList("GordonFreeman").Return(
-		nil,
-	).Times(1)
-
-	res := glService.removeFromGuestList("GordonFreeman")
-	assert.NoError(t, res)
-}
-
-func TestRemoveFromGuestListFailure_GuestIsAlreadyCheckedIn(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	arrivalTime := "2019-10-19T17:12:30.174"
-	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
-		models.FullGuestDetails{Name: "GordonFreeman", Table: 10, AccompanyingGuests: 5, TimeArrived: &arrivalTime}, nil,
-	).Times(1)
-
-	res := glService.removeFromGuestList("GordonFreeman")
-	assert.EqualError(t, res, "A guest that has already arrived cannot be removed from the guest list")
-}
-
-func TestRemoveFromGuestListFailure_GetFullDetailsDbErrors(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
-		models.FullGuestDetails{}, errors.New("something went wrong"),
-	).Times(1)
-
-	res := glService.removeFromGuestList("GordonFreeman")
-	assert.EqualError(t, res, "something went wrong")
-}
-
-func TestRemoveFromGuestListFailure_DeleteFromGuestListDbErrors(t *testing.T) {
-	glService, mockGuestRepo := setupServiceTests(t)
-
-	mockGuestRepo.EXPECT().GetFullGuestDetails("GordonFreeman").Return(
-		models.FullGuestDetails{Name: "GordonFreeman", Table: 10, AccompanyingGuests: 5}, nil,
-	).Times(1)
-
-	mockGuestRepo.EXPECT().DeleteFromGuestList("GordonFreeman").Return(
-		errors.New("something went wrong"),
-	).Times(1)
-
-	res := glService.removeFromGuestList("GordonFreeman")
-	assert.EqualError(t, res, "something went wrong")
-}

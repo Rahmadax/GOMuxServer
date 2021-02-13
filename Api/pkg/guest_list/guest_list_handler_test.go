@@ -28,7 +28,7 @@ func setupHandlerTests(t *testing.T) (*guestListHandler, *MockGuestListService) 
 }
 
 // Get guest list
-func Test_GetGuestList__Success(t *testing.T) {
+func Test_GetGuestListHandler_Success(t *testing.T) {
 	glHandler, mockGlService := setupHandlerTests(t)
 
 	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
@@ -42,7 +42,7 @@ func Test_GetGuestList__Success(t *testing.T) {
 	assert.Equal(t, res, guestList)
 }
 
-func Test_GetGuestList__ServiceFailure(t *testing.T) {
+func Test_GetGuestList_ServiceFailure(t *testing.T) {
 	glHandler, mockGlService := setupHandlerTests(t)
 
 	mockGlService.EXPECT().getGuestList().Return(models.GuestList{}, errors.New("something went wrong")).Times(1)

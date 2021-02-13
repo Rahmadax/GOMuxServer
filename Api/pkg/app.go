@@ -28,7 +28,12 @@ func NewApp(config conf.Configuration) (*App, error) {
 
 	validator := system_validator.NewSystemValidator(config)
 
-	guestsRepo := guests_repository.NewGuestsRepository(newDBClient(config.Database))
+	newDb, err := newDBClient(config.Database)
+	if err != nil {
+		return nil, err
+	}
+
+	guestsRepo := guests_repository.NewGuestsRepository(newDb)
 
 	guestsService := guests.NewGuestsService(config, guestsRepo)
 	guests.AddGuestsRoutes(config.Routes, guestsService, validator, app.Router)
@@ -46,19 +51,19 @@ func (app *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	app.Router.ServeHTTP(w, r)
 }
 
-func newDBClient(dbConfig conf.DatabaseConfig) *sql.DB {
+func newDBClient(dbConfig conf.DatabaseConfig) (*sql.DB, error) {
 	fmt.Println(fmt.Sprintf("Connecting to DB %s", dbConfig.Database))
 
 	db, err := sql.Open(dbConfig.Driver, formatConnectionString(dbConfig))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	db.SetConnMaxIdleTime(dbConfig.MaxConnLifeTimeMinute)
 	db.SetMaxIdleConns(dbConfig.MaxIdleConns)
 	db.SetMaxOpenConns(dbConfig.MaxOpenConns)
 
-	return db
+	return db, nil
 }
 
 func formatConnectionString(dbConfig conf.DatabaseConfig) string {

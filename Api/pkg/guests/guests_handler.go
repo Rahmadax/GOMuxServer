@@ -62,20 +62,21 @@ func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
 		updateGuestReq := models.UpdateGuestRequest{}
 		err := json.Unmarshal(body, &updateGuestReq)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		guestName := mux.Vars(r)["name"]
 		err = guestsHandler.validator.ValidateArrivingGuest(guestName, updateGuestReq.AccompanyingGuests)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		err = guestsHandler.service.guestArrives(updateGuestReq.AccompanyingGuests, guestName)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
 		generateHappyResponse(http.StatusOK, models.NameResponse{Name: guestName}, w)
@@ -87,13 +88,13 @@ func (guestsHandler *guestsHandler) guestLeavesHandler() http.HandlerFunc {
 		guestName := mux.Vars(r)["name"]
 		err := guestsHandler.validator.ValidateGuestName(guestName)
 		if err != nil {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
 		err = guestsHandler.service.guestLeaves(guestName)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
@@ -108,11 +109,6 @@ func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 	}
 }
 
-
-func handleErrorResponse(statusCode int, errMessage string, w http.ResponseWriter){
-	w.WriteHeader(statusCode)
-	_, _ = w.Write([]byte(errMessage))
-}
 
 func generateHappyResponse(statusCode int, body interface{}, w http.ResponseWriter) {
 	w.WriteHeader(statusCode)

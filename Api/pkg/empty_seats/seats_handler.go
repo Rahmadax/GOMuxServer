@@ -34,11 +34,10 @@ func (esHandler *emptySeatsHandler) countEmptySeatsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		presentGuestCount, err := esHandler.service.countPresentGuests()
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		println(esHandler.config.Tables.TotalCapacity)
 		response, _ := json.Marshal(models.SeatsEmptyResponse{SeatsEmpty: esHandler.config.Tables.TotalCapacity - presentGuestCount})
 		_, _ = w.Write(response)
 	}

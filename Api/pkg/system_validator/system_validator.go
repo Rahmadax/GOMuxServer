@@ -46,7 +46,7 @@ func (sv systemValidator) ValidateArrivingGuest(guestName string, accompanyingGu
 }
 
 func (sv systemValidator) ValidateGuestName(name string) error {
-	matched, err := regexp.MatchString(`[a-z,.'-]+`, name)
+	matched, err := regexp.MatchString(`^[a-zA-Z.'-]+$`, name)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (sv systemValidator) ValidateTableNumber(tableNumber int) error {
 		return errors.New(fmt.Sprintf("there are only %d tables", sv.config.Tables.TableCount))
 	}
 
-	if tableNumber < 0 {
+	if tableNumber <= 0 {
 		return errors.New("table number must be larger than 0")
 	}
 
