@@ -13,7 +13,7 @@ type GuestsRepository interface {
 	GetFullGuestDetails(name string) (models.FullGuestDetails, error)
 	UpdateGuestLeaves(guestName string) error
 	DeleteGuest(guestName string) error
-	GetGuestsAtTable(tableNumber int) (int, error)
+	GetExpectedGuestsAtTable(tableNumber int) (int, error)
 }
 
 type guestsService struct {
@@ -25,7 +25,7 @@ func (guestsService *guestsService) getPresentGuests() (models.PresentGuestList,
 	return guestsService.guestsRepo.GetPresentGuests()
 }
 
-func (guestsService *guestsService) guestArrives(updateGuestsReq models.UpdateGuestRequest, guestName string) error {
+func (guestsService *guestsService) guestArrives(accompanyingGuests int, guestName string) error {
 	storedGuestDetails, err := guestsService.guestsRepo.GetFullGuestDetails(guestName)
 	if err != nil {
 		return err
@@ -35,23 +35,24 @@ func (guestsService *guestsService) guestArrives(updateGuestsReq models.UpdateGu
 		return errors.New( "guest has already arrived")
 	}
 
-	accompanyingGuestDifference := updateGuestsReq.AccompanyingGuests - storedGuestDetails.AccompanyingGuests
+	accompanyingGuestDifference := accompanyingGuests - storedGuestDetails.AccompanyingGuests
 
 	// Fewer guests than planned is always okay
 	if accompanyingGuestDifference > 0 {
-		spaceAtTable, err := guestsService.guestsRepo.GetGuestsAtTable(storedGuestDetails.Table)
+		expectedGuests, err := guestsService.guestsRepo.GetExpectedGuestsAtTable(storedGuestDetails.Table)
 		if err != nil {
 			return err
 		}
+		spaceAtTable := guestsService.config.Tables.TableCapacityMap[storedGuestDetails.Table-1] - expectedGuests
 
 		// Is there going to be enough space for everyone who is expected + additional newcomers?
 		newExpectedSpace := spaceAtTable - accompanyingGuestDifference
 		if newExpectedSpace < 0 {
-			return errors.New(fmt.Sprintf("Not enough space expected at table. %d spaces left", spaceAtTable + storedGuestDetails.AccompanyingGuests + 1))
+			return errors.New(fmt.Sprintf("Not enough space expected at table. %d spaces left", spaceAtTable))
 		}
 	}
 
-	err = guestsService.guestsRepo.UpdateArrivedGuest(guestName, updateGuestsReq.AccompanyingGuests)
+	err = guestsService.guestsRepo.UpdateArrivedGuest(guestName, accompanyingGuests)
 	if err != nil {
 		return err
 	}

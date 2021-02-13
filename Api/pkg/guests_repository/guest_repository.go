@@ -97,7 +97,7 @@ func (guestsRepo *guestsRepository) AddToGuestList(newGuest models.Guest) error 
 	return nil
 }
 
-func (guestsRepo *guestsRepository) GetGuestsAtTable(tableNumber int) (int, error) {
+func (guestsRepo *guestsRepository) GetExpectedGuestsAtTable(tableNumber int) (int, error) {
 	currentGuestsAtTable := 0
 	err := guestsRepo.dbClient.QueryRow(CountExpectedGuestsAtTable, tableNumber).Scan(&currentGuestsAtTable)
 	if err != nil {

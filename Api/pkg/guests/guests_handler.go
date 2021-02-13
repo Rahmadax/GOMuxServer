@@ -11,7 +11,7 @@ import (
 
 type GuestsService interface {
 	getPresentGuests() (models.PresentGuestList, error)
-	guestArrives (models.UpdateGuestRequest, string) error
+	guestArrives (int, string) error
 	guestLeaves(string) error
 }
 
@@ -73,7 +73,7 @@ func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
 			return
 		}
 
-		err = guestsHandler.service.guestArrives(updateGuestReq, guestName)
+		err = guestsHandler.service.guestArrives(updateGuestReq.AccompanyingGuests, guestName)
 		if err != nil {
 			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
 		}
