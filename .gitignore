@@ -1,3 +1,5 @@
+*.idea
+
 Api/pkg/guest_list/mock_guest_list_handler.go
 Api/pkg/guest_list/mock_guest_list_service.go
 
