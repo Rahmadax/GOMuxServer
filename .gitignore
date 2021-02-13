@@ -1,4 +1,5 @@
-Todo.txt
-
 Api/pkg/guest_list/mock_guest_list_handler.go
 Api/pkg/guest_list/mock_guest_list_service.go
+
+Api/pkg/guests/mock_guests_service.go
+Api/pkg/guests/mock_guests_handler.go

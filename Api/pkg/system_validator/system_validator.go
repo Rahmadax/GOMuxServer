@@ -12,8 +12,8 @@ type systemValidator struct {
 	config conf.Configuration
 }
 
-func (sv systemValidator) ValidateNewGuest(newGuest models.Guest) error {
-	err := sv.ValidateGuestName(newGuest.Name)
+func (sv systemValidator) ValidateNewGuest(newGuest models.Guest, name string) error {
+	err := sv.ValidateGuestName(name)
 	if err != nil {
 		return err
 	}

@@ -1,9 +1,12 @@
 package guest_list
 
 import (
+	"errors"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
+	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/system_validator"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -24,17 +27,38 @@ func setupHandlerTests(t *testing.T) (*guestListHandler, *MockGuestListService) 
 	return glHandler, mockGlService
 }
 
-//// Get guest list
-//func TestGetGuestListHandlerSuccess(t *testing.T) {
+// Get guest list
+func Test_GetGuestList__Success(t *testing.T) {
+	glHandler, mockGlService := setupHandlerTests(t)
+
+	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
+	guest2 := models.Guest{Name: "Bill", Table: 3, AccompanyingGuests: 6}
+	guestList := models.GuestList{Guests: []models.Guest{guest1, guest2}}
+
+	mockGlService.EXPECT().getGuestList().Return(guestList, nil).Times(1)
+
+	res, err := glHandler.getGuestList()
+	assert.NoError(t, err)
+	assert.Equal(t, res, guestList)
+}
+
+func Test_GetGuestList__ServiceFailure(t *testing.T) {
+	glHandler, mockGlService := setupHandlerTests(t)
+
+	mockGlService.EXPECT().getGuestList().Return(models.GuestList{}, errors.New("something went wrong")).Times(1)
+
+	res, err := glHandler.getGuestList()
+	assert.EqualError(t, err, "something went wrong")
+	assert.Equal(t, res, models.GuestList{})
+}
+
+// Delete from guest list
+//func Test_PostGuestList__Success(t *testing.T) {
 //	glHandler, mockGlService := setupHandlerTests(t)
 //
-//	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
-//	guest2 := models.Guest{Name: "Bill", Table: 3, AccompanyingGuests: 6}
-//	guestList := models.GuestList{Guests: []models.Guest{guest1, guest2}}
+//	mockGlService.EXPECT().addToGuestList().Return(guestList, nil).Times(1)
 //
-//	mockGlService.EXPECT().getGuestList().Return(guestList, nil).Times(1)
-//
-//	res := glHandler.getGuestListHandler()
-//
+//	res, err := glHandler.getGuestList()
+//	assert.NoError(t, err)
 //	assert.Equal(t, res, guestList)
 //}

@@ -1,0 +1,22 @@
+
+Needed
+-- Add invitation endpoint
+-- Figure out Handler Tests
+-- Add Unit Tests
+-- Proper Errors / Handling / Sanitize Responses
+-- Gen on test run
+
+Extension
+-- Add Integration Tests
+-- Add setup shell scripts
+-- Look into spinning up local Kibana
+
+Tests
+-- Guests Service
+-- Empty Seats Service
+
+-- Guests List Handler
+-- Guests Handler
+-- Empty Seats Handler
+
+-- Repository

@@ -17,23 +17,10 @@ type GuestListService interface {
 
 type SystemValidator interface {
 	ValidateGuestName(name string) error
-	ValidateNewGuest(newGuest models.Guest) error
+	ValidateNewGuest(newGuest models.Guest, name string) error
 }
 
-type guestListHandler struct {
-	config  conf.Configuration
-	service GuestListService
-	validator SystemValidator
-}
-
-func NewGuestListHandler(service GuestListService, validator SystemValidator)  *guestListHandler {
-	return &guestListHandler{
-		service: service,
-		validator: validator,
-	}
-}
-
-func AddGuestListRoutes(routes conf.RoutesConfig, service GuestListService, validator SystemValidator, router *mux.Router){
+func AddGuestListRoutes(routes conf.RoutesConfig, service GuestListService, validator SystemValidator, router *mux.Router) {
 	handler := NewGuestListHandler(service, validator)
 
 	router.HandleFunc(routes.GetGuestListUri, handler.getGuestListHandler()).Methods("GET")
@@ -41,21 +28,21 @@ func AddGuestListRoutes(routes conf.RoutesConfig, service GuestListService, vali
 	router.HandleFunc(routes.DeleteGuestListUri, handler.guestListDeleteHandler()).Methods("DELETE")
 }
 
+// Http Handlers + Marshallers
 func (glHandler *guestListHandler) getGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		guestList, err := glHandler.service.getGuestList()
+		res, err := glHandler.getGuestList()
 		if err != nil {
 			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
 		}
 
-		response, _ := json.Marshal(guestList)
+		response, _ := json.Marshal(res)
 		_, _ = w.Write(response)
 	}
 }
 
 func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		body, _ := ioutil.ReadAll(r.Body)
 		newGuest := models.Guest{}
 		err := json.Unmarshal(body, &newGuest)
@@ -64,21 +51,12 @@ func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 			return
 		}
 
-		newGuest.Name = mux.Vars(r)["name"]
-		err = glHandler.validator.ValidateNewGuest(newGuest)
-		if err != nil  {
-			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
-			return
-		}
-
-		err = glHandler.service.addToGuestList(newGuest)
+		res, err := glHandler.postGuestList(newGuest, mux.Vars(r)["name"])
 		if err != nil {
 			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
-			return
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		response, _ := json.Marshal( models.NameResponse{Name: newGuest.Name})
+		response, _ := json.Marshal(res)
 		_, _ = w.Write(response)
 	}
 }
@@ -86,15 +64,10 @@ func (glHandler *guestListHandler) postGuestListHandler() http.HandlerFunc {
 func (glHandler *guestListHandler) guestListDeleteHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
-		err := glHandler.validator.ValidateGuestName(guestName)
+		err := glHandler.guestListDelete(guestName)
 		if err != nil {
 			handleErrorResponse(http.StatusBadRequest, err.Error(), w)
 			return
-		}
-
-		err = glHandler.service.removeFromGuestList(guestName)
-		if err != nil {
-			handleErrorResponse(http.StatusInternalServerError, "Something went wrong", w)
 		}
 
 		response, _ := json.Marshal(models.NameResponse{Name: guestName})
@@ -102,7 +75,57 @@ func (glHandler *guestListHandler) guestListDeleteHandler() http.HandlerFunc {
 	}
 }
 
-func handleErrorResponse(statusCode int, errMessage string, w http.ResponseWriter){
+
+// Validation + Service calls
+func (glHandler *guestListHandler) getGuestList() (models.GuestList, error) {
+	return glHandler.service.getGuestList()
+}
+
+func (glHandler *guestListHandler) postGuestList(newGuest models.Guest, name string) (models.NameResponse, error) {
+	err := glHandler.validator.ValidateNewGuest(newGuest, name)
+	if err != nil {
+		return models.NameResponse{}, err
+	}
+	newGuest.Name = name
+
+	err = glHandler.service.addToGuestList(newGuest)
+	if err != nil {
+		return models.NameResponse{}, err
+	}
+
+	return models.NameResponse{Name: newGuest.Name}, nil
+}
+
+func (glHandler *guestListHandler) guestListDelete(guestName string) error {
+	err := glHandler.validator.ValidateGuestName(guestName)
+	if err != nil {
+		return err
+	}
+
+	err = glHandler.service.removeFromGuestList(guestName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Util
+func handleErrorResponse(statusCode int, errMessage string, w http.ResponseWriter) {
 	w.WriteHeader(statusCode)
 	_, _ = w.Write([]byte(errMessage))
+}
+
+// Init
+type guestListHandler struct {
+	config    conf.Configuration
+	service   GuestListService
+	validator SystemValidator
+}
+
+func NewGuestListHandler(service GuestListService, validator SystemValidator) *guestListHandler {
+	return &guestListHandler{
+		service:   service,
+		validator: validator,
+	}
 }
