@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/guests"
-	"github.com/Rahmadax/GOMuxServer/Api/pkg/guests_repo"
+	"github.com/Rahmadax/GOMuxServer/Api/pkg/guests_repository"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/system_validator"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -28,7 +28,7 @@ func NewApp(config conf.Configuration) (*App, error) {
 
 	validator := system_validator.NewSystemValidator(config)
 
-	guestsRepo := guests_repo.NewGuestsRepository(newDBClient(config.Database))
+	guestsRepo := guests_repository.NewGuestsRepository(newDBClient(config.Database))
 
 	guestsService := guests.NewGuestsService(config, guestsRepo)
 	guests.AddGuestsRoutes(config.Routes, guestsService, validator, app.Router)

@@ -12,7 +12,7 @@ type GuestsRepository interface {
 	GetGuestList() (models.GuestList, error)
 	AddToGuestList(newGuest models.Guest) error
 	DeleteFromGuestList(guestName string) error
-	GetGuestsAtTable(tableNumber int) (int, error)
+	GetExpectedGuestsAtTable(tableNumber int) (int, error)
 }
 
 type guestListService struct {
@@ -30,7 +30,7 @@ func (glService guestListService) getGuestList() (models.GuestList, error) {
 }
 
 func (glService guestListService) addToGuestList(newGuest models.Guest) error {
-	currentGuestsAtTable, err := glService.guestsRepo.GetGuestsAtTable(newGuest.Table)
+	currentGuestsAtTable, err := glService.guestsRepo.GetExpectedGuestsAtTable(newGuest.Table)
 	if err != nil {
 		return err
 	}
@@ -71,3 +71,4 @@ func NewGuestListService(config conf.Configuration, guestsRepo GuestsRepository)
 		guestsRepo: guestsRepo,
 	}
 }
+

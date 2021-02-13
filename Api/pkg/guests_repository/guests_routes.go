@@ -1,4 +1,4 @@
-package guests_repo
+package guests_repository
 
 const (
 
