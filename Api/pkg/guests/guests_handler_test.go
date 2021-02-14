@@ -1,9 +1,12 @@
 package guests
 
 import (
+	"errors"
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
+	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/system_validator"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -24,17 +27,41 @@ func setupHandlerTests(t *testing.T) (*guestsHandler, *MockGuestsService) {
 	return glHandler, mockGlService
 }
 
-// Get guest list
-//func Test_GetGuestList__Success(t *testing.T) {
-//	glHandler, mockGlService := setupHandlerTests(t)
-//
-//	guest1 := models.Guest{Name: "Ollie", Table: 1, AccompanyingGuests: 2}
-//	guest2 := models.Guest{Name: "Bill", Table: 3, AccompanyingGuests: 6}
-//	guestList := models.GuestList{Guests: []models.Guest{guest1, guest2}}
-//
-//	mockGlService.EXPECT().getGuestList().Return(guestList, nil).Times(1)
-//
-//	res, err := glHandler.getGuestList()
-//	assert.NoError(t, err)
-//	assert.Equal(t, res, guestList)
-//}
+func Test_GuestArrives__Success(t *testing.T) {
+	glHandler, mockGlService := setupHandlerTests(t)
+
+	updateRequest := models.UpdateGuestRequest{AccompanyingGuests: 5}
+	guestName := "Ted"
+	expectedRes := models.NameResponse{Name: "Ted"}
+
+	mockGlService.EXPECT().guestArrives(updateRequest.AccompanyingGuests, guestName).Return(nil).Times(1)
+
+	res, err := glHandler.guestArrives(updateRequest, guestName)
+	assert.NoError(t, err)
+	assert.Equal(t, res, expectedRes)
+}
+
+func Test_GuestArrives_ValidationFailureNegative(t *testing.T) {
+	glHandler, _ := setupHandlerTests(t)
+
+	updateRequest := models.UpdateGuestRequest{AccompanyingGuests: -1}
+	guestName := "Ted"
+	expectedRes := models.NameResponse{}
+
+	res, err := glHandler.guestArrives(updateRequest, guestName)
+	assert.EqualError(t, err, "guest can't have negative accompanying guests")
+	assert.Equal(t, res, expectedRes)
+}
+
+func Test_GuestArrives_ServiceError(t *testing.T) {
+	glHandler, mockGlService := setupHandlerTests(t)
+
+	updateRequest := models.UpdateGuestRequest{AccompanyingGuests: 5}
+	guestName := "Ted"
+
+	mockGlService.EXPECT().guestArrives(updateRequest.AccompanyingGuests, guestName).Return(errors.New("something went wrong")).Times(1)
+
+	res, err := glHandler.guestArrives(updateRequest, guestName)
+	assert.EqualError(t, err, "something went wrong")
+	assert.Equal(t, res, models.NameResponse{})
+}

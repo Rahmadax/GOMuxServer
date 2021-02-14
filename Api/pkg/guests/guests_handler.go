@@ -12,8 +12,9 @@ import (
 
 type GuestsService interface {
 	getPresentGuests() (models.PresentGuestList, error)
-	guestArrives (int, string) error
+	guestArrives(int, string) error
 	guestLeaves(string) error
+    getInvitation(guestName string) (models.FullGuestDetails, error)
 }
 
 type SystemValidator interface {
@@ -22,14 +23,14 @@ type SystemValidator interface {
 }
 
 type guestsHandler struct {
-	config  conf.Configuration
-	service GuestsService
+	config    conf.Configuration
+	service   GuestsService
 	validator SystemValidator
 }
 
 func newGuestListHandler(service GuestsService, validator SystemValidator) *guestsHandler {
 	return &guestsHandler{
-		service: service,
+		service:   service,
 		validator: validator,
 	}
 }
@@ -57,33 +58,6 @@ func (guestsHandler *guestsHandler) getGuestsHandler() http.HandlerFunc {
 	}
 }
 
-func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, _ := ioutil.ReadAll(r.Body)
-		updateGuestReq := models.UpdateGuestRequest{}
-		err := json.Unmarshal(body, &updateGuestReq)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		guestName := mux.Vars(r)["name"]
-		err = guestsHandler.validator.ValidateArrivingGuest(guestName, updateGuestReq.AccompanyingGuests)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		err = guestsHandler.service.guestArrives(updateGuestReq.AccompanyingGuests, guestName)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		generateHappyResponse(http.StatusOK, models.NameResponse{Name: guestName}, w)
-	}
-}
-
 func (guestsHandler *guestsHandler) guestLeavesHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		guestName := mux.Vars(r)["name"]
@@ -103,9 +77,55 @@ func (guestsHandler *guestsHandler) guestLeavesHandler() http.HandlerFunc {
 	}
 }
 
+func (guestsHandler *guestsHandler) guestArrivesHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, _ := ioutil.ReadAll(r.Body)
+		updateGuestReq := models.UpdateGuestRequest{}
+		err := json.Unmarshal(body, &updateGuestReq)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		res, err := guestsHandler.guestArrives(updateGuestReq, mux.Vars(r)["name"])
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		generateHappyResponse(http.StatusOK, res, w)
+
+	}
+}
+
+func (guestsHandler *guestsHandler) guestArrives(updateGuestReq models.UpdateGuestRequest, guestName string) (models.NameResponse, error) {
+	err := guestsHandler.validator.ValidateArrivingGuest(guestName, updateGuestReq.AccompanyingGuests)
+	if err != nil {
+		return models.NameResponse{}, err
+	}
+
+	err = guestsHandler.service.guestArrives(updateGuestReq.AccompanyingGuests, guestName)
+	if err != nil {
+		return models.NameResponse{}, err
+	}
+
+	return models.NameResponse{Name: guestName}, nil
+}
+
 // Invitation
 func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		guestName :=  mux.Vars(r)["name"]
+		err := guestsHandler.validator.ValidateGuestName(guestName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		details, err := guestsHandler.service.getInvitation(guestName)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 
 		_, err := os.Readlink("Api/static/invite.md")
 		if err != nil {
@@ -114,7 +134,6 @@ func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 
 	}
 }
-
 
 func generateHappyResponse(statusCode int, body interface{}, w http.ResponseWriter) {
 	w.WriteHeader(statusCode)

@@ -17,7 +17,7 @@ type GuestsRepository interface {
 }
 
 type guestsService struct {
-	config conf.Configuration
+	config     conf.Configuration
 	guestsRepo GuestsRepository
 }
 
@@ -32,7 +32,7 @@ func (guestsService *guestsService) guestArrives(accompanyingGuests int, guestNa
 	}
 
 	if storedGuestDetails.TimeArrived != nil {
-		return errors.New( "guest has already arrived")
+		return errors.New("guest has already arrived")
 	}
 
 	accompanyingGuestDifference := accompanyingGuests - storedGuestDetails.AccompanyingGuests
@@ -64,9 +64,22 @@ func (guestsService *guestsService) guestLeaves(guestName string) error {
 	return guestsService.guestsRepo.UpdateGuestLeaves(guestName)
 }
 
+func (guestsService *guestsService) getInvitation(guestName string) (models.FullGuestDetails, error) {
+	guestDetails, err := guestsService.guestsRepo.GetFullGuestDetails(guestName)
+	if err != nil {
+		return models.FullGuestDetails{}, err
+	}
+
+	if guestDetails.TimeArrived != nil {
+		return models.FullGuestDetails{}, errors.New("guest has already used their invitation")
+	}
+
+	return guestDetails, nil
+}
+
 func NewGuestsService(config conf.Configuration, guestsRepo GuestsRepository) *guestsService {
 	return &guestsService{
-		config: config,
+		config:     config,
 		guestsRepo: guestsRepo,
 	}
 }

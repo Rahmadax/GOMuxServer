@@ -1,9 +1,7 @@
 
 Needed
 -- Add invitation endpoint
--- Add Unit Tests
 -- Add setup shell scripts
-    -- Run DB
     -- Gen Mocks
     -- Run Server
 
@@ -12,10 +10,5 @@ Extension
 -- Look into spinning up local Kibana
 -- Proper Errors / Handling / Sanitize Responses
 
-
 Tests
--- Guests List Handler
--- Guests Handler
--- Empty Seats Handler
-
 -- Invitation
