@@ -59,7 +59,6 @@ func newDBClient(dbConfig conf.DatabaseConfig) (*sql.DB, error) {
 		return nil, err
 	}
 
-	db.SetConnMaxIdleTime(dbConfig.MaxConnLifeTimeMinute)
 	db.SetMaxIdleConns(dbConfig.MaxIdleConns)
 	db.SetMaxOpenConns(dbConfig.MaxOpenConns)
 
