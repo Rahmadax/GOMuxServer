@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
+	"os"
 )
 
 type GuestsService interface {
@@ -105,6 +106,11 @@ func (guestsHandler *guestsHandler) guestLeavesHandler() http.HandlerFunc {
 // Invitation
 func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
+		_, err := os.Readlink("Api/static/invite.md")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 
 	}
 }
