@@ -5,16 +5,16 @@ import (
 	"github.com/Rahmadax/GOMuxServer/Api/conf"
 	"github.com/Rahmadax/GOMuxServer/Api/pkg/models"
 	"github.com/gorilla/mux"
+	"html/template"
 	"io/ioutil"
 	"net/http"
-	"os"
 )
 
 type GuestsService interface {
 	getPresentGuests() (models.PresentGuestList, error)
 	guestArrives(int, string) error
 	guestLeaves(string) error
-    getInvitation(guestName string) (models.FullGuestDetails, error)
+	getInvitation(guestName string) (models.FullGuestDetails, error)
 }
 
 type SystemValidator interface {
@@ -116,22 +116,33 @@ func (guestsHandler *guestsHandler) guestArrives(updateGuestReq models.UpdateGue
 func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		guestName :=  mux.Vars(r)["name"]
+		type templateStruct struct {
+			Name               string
+			AccompanyingGuests int
+		}
+
+		guestName := mux.Vars(r)["name"]
 		err := guestsHandler.validator.ValidateGuestName(guestName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		details, err := guestsHandler.service.getInvitation(guestName)
+		guestDetails, err := guestsHandler.service.getInvitation(guestName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
-		_, err := os.Readlink("Api/static/invite.md")
+		ts := templateStruct{guestDetails.Name, guestDetails.AccompanyingGuests}
+
+		tmpl, err := template.ParseFiles("Api/pkg/templates/invite.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 
+		_ = tmpl.Execute(w, ts)
 	}
 }
 

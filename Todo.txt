@@ -1,6 +1,5 @@
 
 Needed
--- Add invitation endpoint
 -- Add setup shell scripts
     -- Gen Mocks
     -- Run Server
