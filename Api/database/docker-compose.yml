@@ -1,0 +1,13 @@
+version: "3.7"
+
+services:
+    mysql:
+        container_name: dbTestContainer
+        image: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: Password123
+            MYSQL_DATABASE: dbTest
+        ports:
+            - "3306:3306"
+        volumes:
+            - .:/migrations
