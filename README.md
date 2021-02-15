@@ -1,15 +1,18 @@
-# GOMuxServer
+# Guest API
 
-OS independent guide:
+<h3>OS independent start guide: </h3>
 
-run docker
+<ul>
+    <li>run docker</li>
+    <li>cd api/database </li>
+    <li>docker-compose up</li>
+    <li>docker exec -it dbTestContainer bash</li>
+    <li>mysql --user=root --password="Password123" dbTestContainer < /migrations/migrations/init.sql</li>
+    <li>go run api/cmd/main.go</li>
+</ul>
 
-cd api/database 
-
-docker-compose up
-
-docker exec -it dbTest bash
-
-mysql --user=root --password="Password123" dbTest < /migrations/migrations/init.sql
-
-go run api/cmd/main.go
+<h3>Tests: </h3>
+(sorry this is a bit of effort, ran out of time)
+<ul>
+    <li>run the mock commands found in the make file manually</li>
+</ul>

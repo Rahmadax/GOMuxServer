@@ -15,7 +15,7 @@ type guestsRepository struct {
 func (guestsRepo *guestsRepository) UpdateArrivedGuest(name string, accompanyingGuests int) error {
 	_, err := guestsRepo.dbClient.Exec(UpdateGuestArrives, accompanyingGuests, time.Now(), name)
 	if err != nil {
-		fmt.Println(err) // This should feed to a local kibana or smilar, but ran out of time
+		fmt.Println(err) // This should feed to a local kibana or similar, but ran out of time
 		return errors.New("something went wrong")
 	}
 

@@ -60,5 +60,6 @@ const (
 		COALESCE(sum(accompanying_guests), 0) + COALESCE(count(guest_name), 0) 
 		FROM guests
 		WHERE time_arrived IS NOT NULL
+		AND time_left is NULL
 	`
 )

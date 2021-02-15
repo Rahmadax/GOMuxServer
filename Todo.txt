@@ -1,13 +1,12 @@
 
 Needed
--- Add setup shell scripts
+-- Add setup make / shell scripts
     -- Gen Mocks
     -- Run Server
+
+--Add documentation endpoint
 
 Extension
 -- Add Integration Tests
 -- Look into spinning up local Kibana
 -- Proper Errors / Handling / Sanitize Responses
-
-Tests
--- Invitation

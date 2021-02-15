@@ -134,15 +134,13 @@ func (guestsHandler *guestsHandler) handleInvitationGet() http.HandlerFunc {
 			return
 		}
 
-		ts := templateStruct{guestDetails.Name, guestDetails.AccompanyingGuests}
-
 		tmpl, err := template.ParseFiles("Api/pkg/templates/invite.html")
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
-		_ = tmpl.Execute(w, ts)
+		_ = tmpl.Execute(w, templateStruct{guestDetails.Name, guestDetails.AccompanyingGuests})
 	}
 }
 
